@@ -14,8 +14,13 @@ import org.example.expert.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -48,10 +53,29 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
+    public Page<TodoResponse> getTodos(int page, int size, String weather, LocalDate modifiedAtStart, LocalDate modifiedAtEnd) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "modifiedAt"));
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        Page<Todo> todos;
+
+        // 날짜 조건 입력에 따라 페이징
+        if (modifiedAtStart == null && modifiedAtEnd == null) {          // 둘 다 null
+            if(weather == null){
+                todos = todoRepository.findAll(pageable);
+            }else{
+                todos = todoRepository.findByWeather(weather, pageable);
+            }
+        } else if (modifiedAtStart != null && modifiedAtEnd == null) {   // updateAtEnd만 null
+            todos = todoRepository.findByUpdateAtAfter(modifiedAtStart.atStartOfDay(), weather, pageable);
+        } else if (modifiedAtStart == null && modifiedAtEnd != null) { // updateAtStart만 null
+            todos = todoRepository.findByUpdateAtBefore(modifiedAtEnd.atStartOfDay(), weather, pageable);
+        } else {                                                    // 둘 다 null이 아님
+            if (modifiedAtStart.isAfter(modifiedAtEnd)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start date is bigger then end date");
+            }
+            todos = todoRepository.findByModifiedAtBetween(modifiedAtStart.atStartOfDay(), modifiedAtEnd.atStartOfDay(), weather, pageable);
+        }
+
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
