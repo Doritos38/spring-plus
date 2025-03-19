@@ -6,7 +6,9 @@ import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.manager.dto.request.ManagerSaveRequest;
 import org.example.expert.domain.manager.dto.response.ManagerResponse;
 import org.example.expert.domain.manager.dto.response.ManagerSaveResponse;
+import org.example.expert.domain.manager.entity.Log;
 import org.example.expert.domain.manager.entity.Manager;
+import org.example.expert.domain.manager.repository.LogRepository;
 import org.example.expert.domain.manager.repository.ManagerRepository;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
@@ -14,9 +16,11 @@ import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +32,7 @@ public class ManagerService {
     private final ManagerRepository managerRepository;
     private final UserRepository userRepository;
     private final TodoRepository todoRepository;
+    private final LogRepository logRepository;
 
     @Transactional
     public ManagerSaveResponse saveManager(AuthUser authUser, long todoId, ManagerSaveRequest managerSaveRequest) {
@@ -49,6 +54,8 @@ public class ManagerService {
 
         Manager newManagerUser = new Manager(managerUser, todo);
         Manager savedManagerUser = managerRepository.save(newManagerUser);
+
+        loggingSaveManager(user.getId(), managerSaveRequest.getManagerUserId(), todo.getId());
 
         return new ManagerSaveResponse(
                 savedManagerUser.getId(),
@@ -92,5 +99,14 @@ public class ManagerService {
         }
 
         managerRepository.delete(manager);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void loggingSaveManager(Long userId, Long savedUserId, Long todoId){
+        LocalDateTime now = LocalDateTime.now();
+
+        String record = String.format("요청 유저 ID : %d, 요청 대상 유저 ID : %d, 일정 ID : %d", userId, savedUserId, todoId);
+
+        logRepository.save(new Log(record,now));
     }
 }
