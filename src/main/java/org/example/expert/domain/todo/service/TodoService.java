@@ -7,6 +7,7 @@ import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
+import org.example.expert.domain.todo.dto.response.TodoSearchResponse;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.dto.response.UserResponse;
@@ -65,9 +66,9 @@ public class TodoService {
             }else{
                 todos = todoRepository.findByWeather(weather, pageable);
             }
-        } else if (modifiedAtStart != null && modifiedAtEnd == null) {   // updateAtEnd만 null
+        } else if (modifiedAtStart != null && modifiedAtEnd == null) {   // modifiedAtEnd만 null
             todos = todoRepository.findByUpdateAtAfter(modifiedAtStart.atStartOfDay(), weather, pageable);
-        } else if (modifiedAtStart == null && modifiedAtEnd != null) { // updateAtStart만 null
+        } else if (modifiedAtStart == null && modifiedAtEnd != null) { // modifiedAtStart만 null
             todos = todoRepository.findByUpdateAtBefore(modifiedAtEnd.atStartOfDay(), weather, pageable);
         } else {                                                    // 둘 다 null이 아님
             if (modifiedAtStart.isAfter(modifiedAtEnd)) {
@@ -103,5 +104,21 @@ public class TodoService {
                 todo.getCreatedAt(),
                 todo.getModifiedAt()
         );
+    }
+
+    public Page<TodoSearchResponse> searchTodos(int page, int size, String title, LocalDate createdAtStart, LocalDate createdAtEnd, String nickName) {
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Todo> todos = todoRepository.findByTitleAndNickName(createdAtStart.atStartOfDay(), createdAtEnd.atStartOfDay(), title, nickName, pageable);
+
+        return todos.map(todo -> new TodoSearchResponse(
+                todo.getId(),
+                todo.getTitle(),
+                todo.getManagers().size(),
+                todo.getComments().size(),
+                todo.getCreatedAt(),
+                todo.getModifiedAt()
+        ));
     }
 }
