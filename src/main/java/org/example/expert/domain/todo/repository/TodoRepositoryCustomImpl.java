@@ -1,9 +1,13 @@
 package org.example.expert.domain.todo.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.example.expert.domain.todo.dto.response.TodoSearchResponse;
 import org.example.expert.domain.todo.entity.Todo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +43,7 @@ public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
     }
 
     @Override
-    public Page<Todo> findByTitleAndNickName(LocalDateTime createdAtStart, LocalDateTime createdAtEnd, String title, String nickName, Pageable pageable) {
+    public Page<TodoSearchResponse> findByTitleAndNickName(LocalDateTime createdAtStart, LocalDateTime createdAtEnd, String title, String nickName, Pageable pageable) {
 
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -62,10 +66,21 @@ public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
             builder.and(todo.user.nickName.containsIgnoreCase(nickName));
         }
 
-        List<Todo> result = queryFactory
-                .selectFrom(todo)
-                .leftJoin(todo.comments, comment).fetchJoin()
-                .leftJoin(todo.managers, manager).fetchJoin()
+        List<TodoSearchResponse> result = queryFactory
+                .select(Projections.constructor(
+                        TodoSearchResponse.class,
+                        todo.id,
+                        todo.title,
+                        JPAExpressions.select(manager.count())
+                                .from(manager)
+                                .where(manager.todo.eq(todo)),
+                        JPAExpressions.select(comment.count())
+                                .from(comment)
+                                .where(comment.todo.eq(todo)),
+                        todo.createdAt,
+                        todo.modifiedAt
+                ))
+                .from(todo)
                 .where(builder)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

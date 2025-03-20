@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -110,15 +111,11 @@ public class TodoService {
 
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Todo> todos = todoRepository.findByTitleAndNickName(createdAtStart.atStartOfDay(), createdAtEnd.atStartOfDay(), title, nickName, pageable);
+        LocalDateTime startDate = createdAtStart != null ? createdAtStart.atStartOfDay() : null;
+        LocalDateTime endDate = createdAtEnd != null ? createdAtEnd.atStartOfDay() : null;
 
-        return todos.map(todo -> new TodoSearchResponse(
-                todo.getId(),
-                todo.getTitle(),
-                todo.getManagers().size(),
-                todo.getComments().size(),
-                todo.getCreatedAt(),
-                todo.getModifiedAt()
-        ));
+        Page<TodoSearchResponse> todos = todoRepository.findByTitleAndNickName(startDate, endDate, title, nickName, pageable);
+
+       return todos;
     }
 }

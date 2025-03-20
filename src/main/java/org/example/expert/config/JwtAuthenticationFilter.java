@@ -31,12 +31,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // jwt
         String authorizationHeader = request.getHeader("Authorization");
 
-        if (authorizationHeader == null) {
-            // 토큰이 없는 경우 400을 반환합니다.
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "JWT 토큰이 필요합니다.");
-            return;
-        }
-
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String jwt = jwtUtil.substringToken(authorizationHeader);
             try {
