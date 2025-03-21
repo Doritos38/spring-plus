@@ -1,8 +1,8 @@
 # SPRING PLUS
 
 ## 12-1
-<img src="https://drive.google.com/file/d/16oFuVUCayZco2eVVUPQjJCKtyFEGa59o/view?usp=sharing" whidth="700" height="370">
-<img src="https://drive.google.com/file/d/1N2INKD4uVBPn5J8hY1oxzW2_FZXcbiWb/view?usp=sharing" whidth="700" height="370">
+<img src="image/1-1.png" whidth="700" height="370">
+<img src="image/1-2.png" whidth="700" height="370">
 
 * health check API
   * get 요청
@@ -12,4 +12,4 @@
 
 
 ## 12-2
-<img src="https://drive.google.com/file/d/16oFuVUCayZco2eVVUPQjJCKtyFEGa59o/view?usp=sharing" whidth="700" height="370">
+<img src="image/2-1.png" whidth="700" height="370">
